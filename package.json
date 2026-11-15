@@ -1,0 +1,27 @@
+{
+  "name": "projetofinal_modulo5",
+  "version": "1.0.0",
+  "description": "API REST do TaskFlow em Node.js, Express e MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/philoDu/ProjetoFinal_Modulo5.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/philoDu/ProjetoFinal_Modulo5/issues"
+  },
+  "homepage": "https://github.com/philoDu/ProjetoFinal_Modulo5#readme",
+  "dependencies": {
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "mongoose": "^9.12.1"
+  }
+}
