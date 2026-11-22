@@ -3,7 +3,9 @@ import { env } from "./config/env.js";
 import { conectarBanco } from "./config/database.js";
 
 try {
-  await conectarBanco();
+  await conectarBanco({
+    tentativas: env.nodeEnv === "production" ? 5 : Infinity,
+  });
 } catch (erro) {
   console.error("[BOOT]", erro.message);
   process.exit(1);

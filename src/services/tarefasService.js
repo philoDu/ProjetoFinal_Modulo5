@@ -189,8 +189,8 @@ export async function atualizar(id, dados) {
 
   const anterior = paraSaida(atual);
   const nova = { ...anterior, ...filtrarCampos(dados) };
-  normalizar(tarefa);
-  validar(tarefa);
+  normalizar(nova);
+  validar(nova);
   aplicarConclusao(nova, anterior);
 
   const atualizada = await tarefasRepository.atualizar(

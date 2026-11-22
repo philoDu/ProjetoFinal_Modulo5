@@ -17,8 +17,9 @@ export async function conectarBanco({
       console.log("[MONGO] Conectado com sucesso");
       return;
     } catch (erro) {
+      const total = Number.isFinite(tentativas) ? `/${tentativas}` : "";
       console.error(
-        `[MONGO] Tentativa ${tentativa}/${tentativas} falhou:`,
+        `[MONGO] Tentativa ${tentativa}${total} falhou:`,
         erro.message,
       );
       if (tentativa < tentativas) await esperar(intervaloMs);
