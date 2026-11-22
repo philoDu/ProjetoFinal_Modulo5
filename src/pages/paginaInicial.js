@@ -8,7 +8,7 @@ const arte = String.raw`
         \|__|  \|__|\|__|\_________\|__| \|__|\|__|    \|_______|\|_______|\|____________|
                         \|_________|                                                      
                                                                                     
-`
+`;
 
 export const paginaInicial = `<!doctype html>
 <html lang="pt-BR">
@@ -22,4 +22,4 @@ export const paginaInicial = `<!doctype html>
     <p>API Gerenciador de Tarefas</p>
     <p><a href="/health">Status em /health</a></p>
   </body>
-</html>`
+</html>`;

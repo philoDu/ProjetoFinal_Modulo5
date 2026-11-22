@@ -2,7 +2,7 @@
   "name": "projetofinal_modulo5",
   "version": "1.0.0",
   "description": "API REST do TaskFlow em Node.js, Express e MongoDB",
-  "main": "app.js",
+  "main": "src/server.js",
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js"
@@ -12,7 +12,7 @@
     "url": "git+https://github.com/philoDu/ProjetoFinal_Modulo5.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Felipe Duarte",
   "license": "ISC",
   "type": "module",
   "bugs": {

@@ -1,10 +1,14 @@
-import app from './app.js'
-import { env } from './config/env.js'
-import { conectarBanco } from './config/database.js'
+import app from "./app.js";
+import { env } from "./config/env.js";
+import { conectarBanco } from "./config/database.js";
 
-await conectarBanco()
+try {
+  await conectarBanco();
+} catch (erro) {
+  console.error("[BOOT]", erro.message);
+  process.exit(1);
+}
 
 app.listen(env.port, () => {
-    console.log(`Servidor ouvindo na porta ${env.port}`)
-})
-
+  console.log(`Servidor ouvindo na porta ${env.port}`);
+});
