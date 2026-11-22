@@ -17,6 +17,10 @@ export async function atualizar(req, res) {
   res.json(await tarefasService.atualizar(req.params.id, req.body));
 }
 
+export async function substituir(req, res) {
+  res.json(await tarefasService.substituir(req.params.id, req.body));
+}
+
 export async function excluir(req, res) {
   await tarefasService.excluir(req.params.id);
   res.status(204).send();

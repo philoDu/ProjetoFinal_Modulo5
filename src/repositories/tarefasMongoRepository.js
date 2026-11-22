@@ -54,6 +54,16 @@ export const tarefasRepository = {
     return documento !== null;
   },
 
+  // Dos ids informados, devolve os que pertencem a tarefas existentes
+  async idsExistentes(ids) {
+    const validos = ids.filter((id) => mongoose.isValidObjectId(id));
+    const documentos = await Tarefa.find(
+      { _id: { $in: validos } },
+      { _id: 1 },
+    ).lean();
+    return documentos.map((documento) => documento._id.toString());
+  },
+
   async removerDosVinculos(id) {
     await Tarefa.updateMany({ vinculadas: id }, { $pull: { vinculadas: id } });
   },

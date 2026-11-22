@@ -28,10 +28,38 @@ function filtrarCampos(dados) {
   );
 }
 
-function dataDaqui(dias) {
-  const data = new Date();
-  data.setDate(data.getDate() + dias);
-  return data.toISOString().slice(0, 10);
+// O container roda em UTC; as datas do domínio seguem o horário de Brasília
+const FUSO_HORARIO = "America/Sao_Paulo";
+
+// Data (AAAA-MM-DD) no fuso da aplicação, somando alguns dias a um instante
+function dataMaisDias(dias, base = new Date()) {
+  const hoje = new Intl.DateTimeFormat("en-CA", {
+    timeZone: FUSO_HORARIO,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(base);
+  const [ano, mes, dia] = hoje.split("-").map(Number);
+  return new Date(Date.UTC(ano, mes - 1, dia + dias))
+    .toISOString()
+    .slice(0, 10);
+}
+
+// RN01 e RN03: valores padrão dos campos editáveis
+function valoresPadrao(criadoEm) {
+  return {
+    tipo: "tarefa",
+    descricao: "",
+    projeto: null, // (futuro) obrigatório quando existirem projetos
+    status: "a-fazer",
+    prioridade: "media",
+    responsaveis: [],
+    dataInicio: null,
+    dataEntrega: dataMaisDias(30, criadoEm),
+    pontos: null,
+    vinculadas: [],
+    solucao: "",
+  };
 }
 
 function dataValida(texto) {
@@ -68,6 +96,9 @@ function paraSaida(tarefa) {
 function normalizar(tarefa) {
   if (typeof tarefa.titulo === "string") {
     tarefa.titulo = tarefa.titulo.trim();
+  }
+  if (Array.isArray(tarefa.vinculadas)) {
+    tarefa.vinculadas = [...new Set(tarefa.vinculadas)];
   }
   return tarefa;
 }
@@ -121,6 +152,11 @@ function validar(tarefa) {
       throw new AppError(`O campo '${campo}' deve ser uma lista.`);
     }
   }
+  if (tarefa.vinculadas.some((id) => typeof id !== "string")) {
+    throw new AppError(
+      "O campo 'vinculadas' deve conter apenas ids de tarefas.",
+    );
+  }
   // RN10
   if (tarefa.id && tarefa.vinculadas.includes(tarefa.id)) {
     throw new AppError("Uma tarefa não pode ser vinculada a si mesma.");
@@ -160,44 +196,64 @@ export async function buscarPorId(id) {
   return paraSaida(tarefa);
 }
 
+// Todos os ids de 'vinculadas' precisam ser de tarefas existentes
+async function validarVinculadas(vinculadas) {
+  if (vinculadas.length === 0) return;
+  const existentes = await tarefasRepository.idsExistentes(vinculadas);
+  const inexistentes = vinculadas.filter((id) => !existentes.includes(id));
+  if (inexistentes.length > 0) {
+    throw new AppError(
+      `Tarefas vinculadas não encontradas: ${inexistentes.join(", ")}.`,
+    );
+  }
+}
+
 export async function criar(dados) {
-  // RN01 e RN03: valores padrão; o que o cliente enviar substitui os padrões
-  const tarefa = {
-    tipo: "tarefa",
-    descricao: "",
-    projeto: null, // (futuro) obrigatório quando existirem projetos
-    status: "a-fazer",
-    prioridade: "media",
-    responsaveis: [],
-    dataInicio: null,
-    dataEntrega: dataDaqui(30),
-    pontos: null,
-    vinculadas: [],
-    solucao: "",
-    ...filtrarCampos(dados),
-  };
+  // O que o cliente enviar substitui os valores padrão
+  const tarefa = { ...valoresPadrao(), ...filtrarCampos(dados) };
   normalizar(tarefa);
   validar(tarefa);
+  await validarVinculadas(tarefa.vinculadas);
   aplicarConclusao(tarefa, null);
   const criada = await tarefasRepository.criar(paraArmazenamento(tarefa));
   return paraSaida(criada);
 }
 
-export async function atualizar(id, dados) {
-  const atual = await tarefasRepository.buscarPorId(id);
-  if (!atual) throw new AppError("Tarefa não encontrada.", 404);
-
-  const anterior = paraSaida(atual);
-  const nova = { ...anterior, ...filtrarCampos(dados) };
+// Grava a nova versão da tarefa, partindo da versão atual guardada no banco
+async function salvar(id, anterior, nova) {
   normalizar(nova);
   validar(nova);
+  await validarVinculadas(nova.vinculadas);
   aplicarConclusao(nova, anterior);
 
-  const atualizada = await tarefasRepository.atualizar(
-    id,
-    paraArmazenamento(nova),
-  );
-  return paraSaida(atualizada);
+  const salva = await tarefasRepository.atualizar(id, paraArmazenamento(nova));
+  // A tarefa pode ter sido excluída entre a busca e a gravação
+  if (!salva) throw new AppError("Tarefa não encontrada.", 404);
+  return paraSaida(salva);
+}
+
+async function buscarAtual(id) {
+  const atual = await tarefasRepository.buscarPorId(id);
+  if (!atual) throw new AppError("Tarefa não encontrada.", 404);
+  return paraSaida(atual);
+}
+
+// PATCH: altera só os campos enviados
+export async function atualizar(id, dados) {
+  const anterior = await buscarAtual(id);
+  const nova = { ...anterior, ...filtrarCampos(dados) };
+  return salvar(id, anterior, nova);
+}
+
+// PUT: substitui a tarefa; os campos não enviados voltam ao valor padrão
+export async function substituir(id, dados) {
+  const anterior = await buscarAtual(id);
+  const nova = {
+    ...anterior,
+    ...valoresPadrao(anterior.criadoEm),
+    ...filtrarCampos(dados),
+  };
+  return salvar(id, anterior, nova);
 }
 
 export async function excluir(id) {

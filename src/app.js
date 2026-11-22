@@ -17,12 +17,15 @@ app.get("/", (_req, res) => {
   res.send(paginaInicial);
 });
 
+// 503 sem banco, para a plataforma de hospedagem perceber a falha
 app.get("/health", (_req, res) => {
-  res.json({
-    ok: true,
+  const mongo = estadoBanco();
+  const ok = mongo === "conectado";
+  res.status(ok ? 200 : 503).json({
+    ok,
     node: process.version,
     uptime: process.uptime(),
-    mongo: estadoBanco(),
+    mongo,
     ambiente: env.nodeEnv,
   });
 });

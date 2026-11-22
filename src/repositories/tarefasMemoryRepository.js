@@ -52,6 +52,10 @@ export const tarefasRepository = {
     return true;
   },
 
+  async idsExistentes(ids) {
+    return ids.filter((id) => tarefas.some((t) => t.id === id));
+  },
+
   async removerDosVinculos(id) {
     for (const tarefa of tarefas) {
       tarefa.vinculadas = (tarefa.vinculadas ?? []).filter((v) => v !== id);
